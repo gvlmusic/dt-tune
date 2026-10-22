@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DT Tune">
+<meta name="theme-color" content="#0e0e10">
+<title>DT2 Tune</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff6a2b'/%3E%3Ctext x='32' y='42' font-size='28' font-family='Arial' font-weight='700' text-anchor='middle' fill='%230e0e10'%3E%E2%99%AF%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0e0e10; --panel:#17171b; --line:#2a2a31; --text:#f2f2f4; --muted:#8b8b95;
+    --accent:#ff6a2b; --accent-soft:rgba(255,106,43,.14); --good:#3ddc97;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",Roboto,sans-serif}
+  body{padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 20px);
+    max-width:520px;margin:0 auto;user-select:none;-webkit-user-select:none}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+  h1{font-size:20px;margin:0;letter-spacing:.02em}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);font-size:12px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+  .label{display:flex;justify-content:space-between;align-items:center;font-size:12px;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+  .label b{color:var(--text);font-size:15px;letter-spacing:0;text-transform:none}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .grid button{appearance:none;border:1px solid var(--line);background:#1e1e23;color:var(--text);
+    height:48px;border-radius:12px;font-size:15px;font-weight:600;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+  .grid button small{font-size:10px;color:var(--muted);font-weight:500}
+  .grid button.sharp{background:#141418}
+  .grid button.on{background:var(--accent);border-color:var(--accent);color:#111}
+  .grid button.on small{color:#3a1a0c}
+  .swap{display:flex;justify-content:center;margin:-4px 0 8px}
+  .swap button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--muted);
+    border-radius:999px;padding:7px 14px;font-size:13px;font-family:inherit}
+  .results{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .group-title{grid-column:1/-1;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:4px 2px 0}
+  .card{border:1px solid var(--line);border-radius:14px;padding:12px;background:#1b1b20;position:relative}
+  .card .dir{font-size:12px;color:var(--muted)}
+  .card .val{font-size:32px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .card .hint{font-size:11px;color:var(--muted);margin-top:2px}
+  .card.best{border-color:var(--accent);background:var(--accent-soft)}
+  .card.best::after{content:"ближче";position:absolute;top:10px;right:10px;font-size:10px;
+    color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .summary{text-align:center;font-size:14px;color:var(--muted);margin:2px 0 12px}
+  .summary b{color:var(--text)}
+  .same{color:var(--good)}
+  footer{color:var(--muted);font-size:11px;line-height:1.5;text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Digitakt <span>2</span> · Tune</h1>
+  <div class="sub">семпл → тональність</div>
+</header>
+
+<section>
+  <div class="label">Тональність патерну <b id="pName">—</b></div>
+  <div class="grid" id="pGrid"></div>
+</section>
+
+<div class="swap"><button id="swap" type="button">⇅ поміняти місцями</button></div>
+
+<section>
+  <div class="label">Нота семплу <b id="sName">—</b></div>
+  <div class="grid" id="sGrid"></div>
+</section>
+
+<div class="summary" id="summary"></div>
+
+<section>
+  <div class="results">
+    <div class="group-title">Trig · нота (від C4)</div>
+    <div class="card" id="tUp"><div class="dir">↑ вгору</div><div class="val">—</div><div class="hint"></div></div>
+    <div class="card" id="tDn"><div class="dir">↓ вниз</div><div class="val">—</div><div class="hint"></div></div>
+    <div class="group-title">Tune · півтони (від 0)</div>
+    <div class="card" id="uUp"><div class="dir">↑ вгору</div><div class="val">—</div><div class="hint"></div></div>
+    <div class="card" id="uDn"><div class="dir">↓ вниз</div><div class="val">—</div><div class="hint"></div></div>
+  </div>
+</section>
+
+<footer>Семпл на Digitakt 2 за замовчуванням звучить як C (C4 у trig, 0 у TUNE).<br>Обери тональність патерну й ноту семплу — отримаєш зсув в обидва боки.</footer>
+
+<script>
+(function(){
+  var SH=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  var FL=['','D♭','','E♭','','','G♭','','A♭','','B♭',''];
+  var state={p:null,s:null};
+  try{var saved=JSON.parse(localStorage.getItem('dt2tune')||'null');if(saved){state.p=saved.p;state.s=saved.s;}}catch(e){}
+
+  function build(id,key){
+    var g=document.getElementById(id);
+    SH.forEach(function(n,i){
+      var b=document.createElement('button');b.type='button';
+      if(n.length>1)b.className='sharp';
+      b.innerHTML=n+(FL[i]?'<small>'+FL[i]+'</small>':'');
+      b.addEventListener('click',function(){state[key]=i;render();});
+      g.appendChild(b);
+    });
+  }
+  build('pGrid','p');build('sGrid','s');
+
+  function noteAt(semi){ // relative to C4
+    var idx=((semi%12)+12)%12, oct=4+Math.floor(semi/12);
+    return SH[idx]+oct;
+  }
+  function sign(n){return n>0?'+'+n:String(n);}
+  function setCard(id,val,hint,best){
+    var c=document.getElementById(id);
+    c.querySelector('.val').textContent=val;
+    c.querySelector('.hint').textContent=hint;
+    c.classList.toggle('best',!!best);
+  }
+  function mark(id,i){
+    var bs=document.getElementById(id).children;
+    for(var k=0;k<bs.length;k++)bs[k].classList.toggle('on',k===i);
+  }
+
+  function render(){
+    mark('pGrid',state.p);mark('sGrid',state.s);
+    document.getElementById('pName').textContent=state.p==null?'—':SH[state.p];
+    document.getElementById('sName').textContent=state.s==null?'—':SH[state.s];
+    try{localStorage.setItem('dt2tune',JSON.stringify(state));}catch(e){}
+    var sum=document.getElementById('summary');
+    if(state.p==null||state.s==null){
+      sum.textContent='Обери обидві ноти';
+      ['tUp','tDn','uUp','uDn'].forEach(function(id){setCard(id,'—','',false);});
+      return;
+    }
+    var up=((state.p-state.s)%12+12)%12;
+    var dn=up-12;
+    if(up===0){
+      sum.innerHTML='<span class="same">Семпл уже в тональності — нічого не міняй</span>';
+      setCard('tUp','C4','без змін',true);
+      setCard('tDn','C3','октава нижче',false);
+      setCard('uUp','0','без змін',true);
+      setCard('uDn','−12','октава нижче',false);
+      return;
+    }
+    var upBest=up<=Math.abs(dn), dnBest=Math.abs(dn)<=up;
+    sum.innerHTML='Семпл <b>'+SH[state.s]+'</b> → патерн <b>'+SH[state.p]+'</b>: '+sign(up)+' або '+sign(dn).replace('-','−')+' півтонів';
+    setCard('tUp',noteAt(up),sign(up)+' пт від C4',upBest);
+    setCard('tDn',noteAt(dn),String(dn).replace('-','−')+' пт від C4',dnBest);
+    setCard('uUp',sign(up),'TUNE',upBest);
+    setCard('uDn',String(dn).replace('-','−'),'TUNE',dnBest);
+  }
+
+  document.getElementById('swap').addEventListener('click',function(){
+    var t=state.p;state.p=state.s;state.s=t;render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
