@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="uk">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
@@ -7,69 +7,118 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DT Tune">
-<meta name="theme-color" content="#0e0e10">
+<meta name="theme-color" content="#07050d">
 <title>DT2 Tune</title>
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff6a2b'/%3E%3Ctext x='32' y='42' font-size='28' font-family='Arial' font-weight='700' text-anchor='middle' fill='%230e0e10'%3E%E2%99%AF%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='1' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%23ff2bd6'/%3E%3Cstop offset='1' stop-color='%2322f0ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%230a0714'/%3E%3Ccircle cx='32' cy='32' r='21' fill='none' stroke='url(%23g)' stroke-width='5'/%3E%3Ctext x='32' y='41' font-size='24' font-family='Arial' font-weight='700' text-anchor='middle' fill='%23fff'%3EC%3C/text%3E%3C/svg%3E">
 <style>
   :root{
-    --bg:#0e0e10; --panel:#17171b; --line:#2a2a31; --text:#f2f2f4; --muted:#8b8b95;
-    --accent:#ff6a2b; --accent-soft:rgba(255,106,43,.14); --good:#3ddc97;
+    --bg:#07050d; --bg2:#1a0f2e;
+    --panel:rgba(22,14,40,.62); --line:rgba(140,110,220,.22); --line-strong:rgba(160,130,255,.38);
+    --text:#f4f1ff; --muted:#9a90b8;
+    --cyan:#22f0ff; --pink:#ff2bd6; --violet:#9b6bff;
+    --cyan-glow:0 0 6px rgba(34,240,255,.8),0 0 18px rgba(34,240,255,.45);
+    --pink-glow:0 0 6px rgba(255,43,214,.8),0 0 18px rgba(255,43,214,.45);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",Roboto,sans-serif}
-  body{padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 20px);
-    max-width:520px;margin:0 auto;user-select:none;-webkit-user-select:none}
-  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
-  h1{font-size:20px;margin:0;letter-spacing:.02em}
-  h1 span{color:var(--accent)}
-  .sub{color:var(--muted);font-size:12px}
-  section{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
-  .label{display:flex;justify-content:space-between;align-items:center;font-size:12px;
-    text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
-  .label b{color:var(--text);font-size:15px;letter-spacing:0;text-transform:none}
-  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-  .grid button{appearance:none;border:1px solid var(--line);background:#1e1e23;color:var(--text);
-    height:48px;border-radius:12px;font-size:15px;font-weight:600;font-family:inherit;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+  html{background:var(--bg)}
+  body{
+    margin:0 auto;max-width:520px;min-height:100vh;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",Roboto,sans-serif;
+    padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);
+    user-select:none;-webkit-user-select:none;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(155,107,255,.20), transparent 60%),
+      radial-gradient(80% 50% at 50% 100%, rgba(255,43,214,.10), transparent 70%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+  /* synthwave floor grid */
+  body::before{
+    content:"";position:fixed;left:-50%;right:-50%;bottom:0;height:34vh;z-index:-1;pointer-events:none;
+    background:
+      repeating-linear-gradient(to top, rgba(155,107,255,.28) 0 1px, transparent 1px 34px),
+      repeating-linear-gradient(to right, rgba(155,107,255,.28) 0 1px, transparent 1px 56px);
+    transform:perspective(320px) rotateX(62deg);transform-origin:bottom;
+    -webkit-mask-image:linear-gradient(to top,#000 10%,transparent 85%);
+            mask-image:linear-gradient(to top,#000 10%,transparent 85%);
+  }
+
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  h1{margin:0;font-size:21px;font-weight:800;letter-spacing:.04em;
+    background:linear-gradient(90deg,var(--pink),var(--violet) 50%,var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 10px rgba(155,107,255,.55))}
+  .sub{color:var(--muted);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+
+  section{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:12px;
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 30px rgba(0,0,0,.35)}
+  .label{display:flex;justify-content:space-between;align-items:center;font-size:11px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
+  .label b{font-size:17px;letter-spacing:0;text-transform:none;font-weight:800}
+  .p .label b{color:var(--cyan);text-shadow:var(--cyan-glow)}
+  .s .label b{color:var(--pink);text-shadow:var(--pink-glow)}
+
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+  .grid button{appearance:none;font-family:inherit;color:var(--text);
+    height:50px;border-radius:13px;font-size:15px;font-weight:700;
+    border:1px solid var(--line);background:rgba(30,20,52,.75);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;
+    transition:box-shadow .15s,border-color .15s,background .15s,color .15s}
   .grid button small{font-size:10px;color:var(--muted);font-weight:500}
-  .grid button.sharp{background:#141418}
-  .grid button.on{background:var(--accent);border-color:var(--accent);color:#111}
-  .grid button.on small{color:#3a1a0c}
+  .grid button.sharp{background:rgba(12,8,24,.85)}
+  .grid button:active{transform:scale(.96)}
+  .p .grid button.on{border-color:var(--cyan);color:var(--cyan);background:rgba(34,240,255,.10);
+    box-shadow:var(--cyan-glow),inset 0 0 12px rgba(34,240,255,.25);text-shadow:0 0 8px rgba(34,240,255,.8)}
+  .s .grid button.on{border-color:var(--pink);color:var(--pink);background:rgba(255,43,214,.10);
+    box-shadow:var(--pink-glow),inset 0 0 12px rgba(255,43,214,.25);text-shadow:0 0 8px rgba(255,43,214,.8)}
+  .grid button.on small{color:inherit;opacity:.75}
+
   .swap{display:flex;justify-content:center;margin:-4px 0 8px}
-  .swap button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--muted);
-    border-radius:999px;padding:7px 14px;font-size:13px;font-family:inherit}
-  .results{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .group-title{grid-column:1/-1;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:4px 2px 0}
-  .card{border:1px solid var(--line);border-radius:14px;padding:12px;background:#1b1b20;position:relative}
-  .card .dir{font-size:12px;color:var(--muted)}
-  .card .val{font-size:32px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .swap button{appearance:none;font-family:inherit;font-size:13px;color:var(--text);
+    border:1px solid var(--line-strong);background:rgba(22,14,40,.85);border-radius:999px;padding:8px 16px;
+    box-shadow:0 0 14px rgba(155,107,255,.25)}
+  .swap button:active{transform:scale(.96)}
+
+  .summary{text-align:center;font-size:14px;color:var(--muted);margin:4px 0 12px;min-height:20px}
+  .summary b.p{color:var(--cyan);text-shadow:var(--cyan-glow)}
+  .summary b.s{color:var(--pink);text-shadow:var(--pink-glow)}
+  .same{color:var(--cyan);text-shadow:var(--cyan-glow)}
+
+  .results{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .group-title{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:4px 2px 0}
+  .card{--c:var(--cyan);--g:var(--cyan-glow);
+    position:relative;border-radius:16px;padding:12px;border:1px solid var(--line);background:rgba(14,9,28,.7);
+    transition:box-shadow .2s,border-color .2s}
+  .card.dn{--c:var(--pink);--g:var(--pink-glow)}
+  .card .dir{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .card .dir i{font-style:normal;color:var(--c);text-shadow:var(--g);font-weight:800}
+  .card .val{font-size:34px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;color:var(--text)}
   .card .hint{font-size:11px;color:var(--muted);margin-top:2px}
-  .card.best{border-color:var(--accent);background:var(--accent-soft)}
-  .card.best::after{content:"ближче";position:absolute;top:10px;right:10px;font-size:10px;
-    color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-  .summary{text-align:center;font-size:14px;color:var(--muted);margin:2px 0 12px}
-  .summary b{color:var(--text)}
-  .same{color:var(--good)}
-  footer{color:var(--muted);font-size:11px;line-height:1.5;text-align:center;margin-top:6px}
+  .card.best{border-color:var(--c);box-shadow:var(--g),inset 0 0 18px color-mix(in srgb,var(--c) 18%,transparent)}
+  .card.best .val{color:var(--c);text-shadow:var(--g)}
+  .card.best::after{content:"closer";position:absolute;top:11px;right:11px;font-size:10px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--c);text-shadow:var(--g)}
+
+  footer{color:var(--muted);font-size:11px;line-height:1.55;text-align:center;margin-top:8px;opacity:.85}
 </style>
 </head>
 <body>
 <header>
-  <h1>Digitakt <span>2</span> · Tune</h1>
-  <div class="sub">семпл → тональність</div>
+  <h1>DIGITAKT 2 · TUNE</h1>
+  <div class="sub">sample → key</div>
 </header>
 
-<section>
-  <div class="label">Тональність патерну <b id="pName">—</b></div>
+<section class="p">
+  <div class="label">Pattern key <b id="pName">—</b></div>
   <div class="grid" id="pGrid"></div>
 </section>
 
-<div class="swap"><button id="swap" type="button">⇅ поміняти місцями</button></div>
+<div class="swap"><button id="swap" type="button">⇅ swap</button></div>
 
-<section>
-  <div class="label">Нота семплу <b id="sName">—</b></div>
+<section class="s">
+  <div class="label">Sample note <b id="sName">—</b></div>
   <div class="grid" id="sGrid"></div>
 </section>
 
@@ -77,16 +126,16 @@
 
 <section>
   <div class="results">
-    <div class="group-title">Trig · нота (від C4)</div>
-    <div class="card" id="tUp"><div class="dir">↑ вгору</div><div class="val">—</div><div class="hint"></div></div>
-    <div class="card" id="tDn"><div class="dir">↓ вниз</div><div class="val">—</div><div class="hint"></div></div>
-    <div class="group-title">Tune · півтони (від 0)</div>
-    <div class="card" id="uUp"><div class="dir">↑ вгору</div><div class="val">—</div><div class="hint"></div></div>
-    <div class="card" id="uDn"><div class="dir">↓ вниз</div><div class="val">—</div><div class="hint"></div></div>
+    <div class="group-title">Trig · note (from C4)</div>
+    <div class="card up" id="tUp"><div class="dir"><i>▲</i> up</div><div class="val">—</div><div class="hint"></div></div>
+    <div class="card dn" id="tDn"><div class="dir"><i>▼</i> down</div><div class="val">—</div><div class="hint"></div></div>
+    <div class="group-title">Tune · semitones (from 0)</div>
+    <div class="card up" id="uUp"><div class="dir"><i>▲</i> up</div><div class="val">—</div><div class="hint"></div></div>
+    <div class="card dn" id="uDn"><div class="dir"><i>▼</i> down</div><div class="val">—</div><div class="hint"></div></div>
   </div>
 </section>
 
-<footer>Семпл на Digitakt 2 за замовчуванням звучить як C (C4 у trig, 0 у TUNE).<br>Обери тональність патерну й ноту семплу — отримаєш зсув в обидва боки.</footer>
+<footer>On Digitakt 2 a sample plays as C by default (C4 on the trig, 0 on TUNE).<br>Pick the pattern key and the sample note to get the shift both ways.</footer>
 
 <script>
 (function(){
@@ -111,7 +160,7 @@
     var idx=((semi%12)+12)%12, oct=4+Math.floor(semi/12);
     return SH[idx]+oct;
   }
-  function sign(n){return n>0?'+'+n:String(n);}
+  function sign(n){return n>0?'+'+n:String(n).replace('-','−');}
   function setCard(id,val,hint,best){
     var c=document.getElementById(id);
     c.querySelector('.val').textContent=val;
@@ -130,26 +179,26 @@
     try{localStorage.setItem('dt2tune',JSON.stringify(state));}catch(e){}
     var sum=document.getElementById('summary');
     if(state.p==null||state.s==null){
-      sum.textContent='Обери обидві ноти';
+      sum.textContent='Pick both notes';
       ['tUp','tDn','uUp','uDn'].forEach(function(id){setCard(id,'—','',false);});
       return;
     }
     var up=((state.p-state.s)%12+12)%12;
     var dn=up-12;
     if(up===0){
-      sum.innerHTML='<span class="same">Семпл уже в тональності — нічого не міняй</span>';
-      setCard('tUp','C4','без змін',true);
-      setCard('tDn','C3','октава нижче',false);
-      setCard('uUp','0','без змін',true);
-      setCard('uDn','−12','октава нижче',false);
+      sum.innerHTML='<span class="same">Sample is already in key — no change needed</span>';
+      setCard('tUp','C4','no change',true);
+      setCard('tDn','C3','octave down',false);
+      setCard('uUp','0','no change',true);
+      setCard('uDn','−12','octave down',false);
       return;
     }
     var upBest=up<=Math.abs(dn), dnBest=Math.abs(dn)<=up;
-    sum.innerHTML='Семпл <b>'+SH[state.s]+'</b> → патерн <b>'+SH[state.p]+'</b>: '+sign(up)+' або '+sign(dn).replace('-','−')+' півтонів';
-    setCard('tUp',noteAt(up),sign(up)+' пт від C4',upBest);
-    setCard('tDn',noteAt(dn),String(dn).replace('-','−')+' пт від C4',dnBest);
+    sum.innerHTML='Sample <b class="s">'+SH[state.s]+'</b> → pattern <b class="p">'+SH[state.p]+'</b>: '+sign(up)+' or '+sign(dn)+' semitones';
+    setCard('tUp',noteAt(up),sign(up)+' st from C4',upBest);
+    setCard('tDn',noteAt(dn),sign(dn)+' st from C4',dnBest);
     setCard('uUp',sign(up),'TUNE',upBest);
-    setCard('uDn',String(dn).replace('-','−'),'TUNE',dnBest);
+    setCard('uDn',sign(dn),'TUNE',dnBest);
   }
 
   document.getElementById('swap').addEventListener('click',function(){

@@ -1,5 +1,5 @@
 // DT2 Tune — офлайн-кеш. Щоб примусово оновити кеш, змініть номер версії.
-const CACHE = 'dt2tune-v1';
+const CACHE = 'dt2tune-v3';
 const ASSETS = ['./', './index.html', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
