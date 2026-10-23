@@ -1,9 +1,15 @@
-// DT2 Tune — офлайн-кеш. Щоб примусово оновити кеш, змініть номер версії.
-const CACHE = 'dt2tune-v3';
+// DT2 Tune — офлайн-кеш.
+// Сторінка: спершу з інтернету (завжди свіжа версія), без мережі — з кешу.
+// Іконка: з кешу.
+const CACHE = 'dt2tune-v4';
 const ASSETS = ['./', './index.html', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -14,19 +20,28 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Спершу віддаємо з кешу (миттєво й без мережі), паралельно тихо оновлюємо кеш з інтернету.
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const isPage = req.mode === 'navigate' || req.destination === 'document';
+
+  if (isPage) {
+    e.respondWith(
+      fetch(req, { cache: 'no-store' })
+        .then((res) => {
+          if (res && res.ok) caches.open(CACHE).then((c) => c.put('./index.html', res.clone()));
+          return res;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
   e.respondWith(
-    caches.open(CACHE).then((cache) =>
-      cache.match(e.request, { ignoreSearch: true }).then((cached) => {
-        const network = fetch(e.request)
-          .then((res) => {
-            if (res && res.ok) cache.put(e.request, res.clone());
-            return res;
-          })
-          .catch(() => cached || (e.request.mode === 'navigate' ? cache.match('./index.html') : undefined));
-        return cached || network;
+    caches.match(req, { ignoreSearch: true }).then((cached) =>
+      cached || fetch(req).then((res) => {
+        if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+        return res;
       })
     )
   );
