@@ -19,6 +19,7 @@
     --cyan:#22f0ff; --pink:#ff2bd6; --violet:#9b6bff;
     --cyan-glow:0 0 6px rgba(34,240,255,.8),0 0 18px rgba(34,240,255,.45);
     --pink-glow:0 0 6px rgba(255,43,214,.8),0 0 18px rgba(255,43,214,.45);
+    --violet-glow:0 0 6px rgba(155,107,255,.8),0 0 18px rgba(155,107,255,.45);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{background:var(--bg)}
@@ -33,7 +34,6 @@
       var(--bg);
     background-attachment:fixed;
   }
-  /* synthwave floor grid */
   body::before{
     content:"";position:fixed;left:-50%;right:-50%;bottom:0;height:34vh;z-index:-1;pointer-events:none;
     background:
@@ -44,12 +44,22 @@
             mask-image:linear-gradient(to top,#000 10%,transparent 85%);
   }
 
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   h1{margin:0;font-size:21px;font-weight:800;letter-spacing:.04em;
     background:linear-gradient(90deg,var(--pink),var(--violet) 50%,var(--cyan));
     -webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 0 10px rgba(155,107,255,.55))}
   .sub{color:var(--muted);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+
+  /* tabs */
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:14px;
+    border:1px solid var(--line);border-radius:14px;background:rgba(14,9,28,.7)}
+  .tabs button{appearance:none;border:0;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);background:transparent;border-radius:10px;height:38px}
+  .tabs button.on{color:var(--text);background:rgba(155,107,255,.16);box-shadow:inset 0 0 0 1px var(--violet),var(--violet-glow);
+    text-shadow:0 0 8px rgba(155,107,255,.9)}
+  .view{display:none}
+  .view.on{display:block}
 
   section{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:12px;
     -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
@@ -68,7 +78,7 @@
     transition:box-shadow .15s,border-color .15s,background .15s,color .15s}
   .grid button small{font-size:10px;color:var(--muted);font-weight:500}
   .grid button.sharp{background:rgba(12,8,24,.85)}
-  .grid button:active{transform:scale(.96)}
+  .grid button:active,.swap button:active,.use:active,.step:active{transform:scale(.96)}
   .p .grid button.on{border-color:var(--cyan);color:var(--cyan);background:rgba(34,240,255,.10);
     box-shadow:var(--cyan-glow),inset 0 0 12px rgba(34,240,255,.25);text-shadow:0 0 8px rgba(34,240,255,.8)}
   .s .grid button.on{border-color:var(--pink);color:var(--pink);background:rgba(255,43,214,.10);
@@ -79,7 +89,6 @@
   .swap button{appearance:none;font-family:inherit;font-size:13px;color:var(--text);
     border:1px solid var(--line-strong);background:rgba(22,14,40,.85);border-radius:999px;padding:8px 16px;
     box-shadow:0 0 14px rgba(155,107,255,.25)}
-  .swap button:active{transform:scale(.96)}
 
   .summary{text-align:center;font-size:14px;color:var(--muted);margin:4px 0 12px;min-height:20px}
   .summary b.p{color:var(--cyan);text-shadow:var(--cyan-glow)}
@@ -92,6 +101,7 @@
     position:relative;border-radius:16px;padding:12px;border:1px solid var(--line);background:rgba(14,9,28,.7);
     transition:box-shadow .2s,border-color .2s}
   .card.dn{--c:var(--pink);--g:var(--pink-glow)}
+  .card.vi{--c:var(--violet);--g:var(--violet-glow)}
   .card .dir{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
   .card .dir i{font-style:normal;color:var(--c);text-shadow:var(--g);font-weight:800}
   .card .val{font-size:34px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;color:var(--text)}
@@ -100,6 +110,37 @@
   .card.best .val{color:var(--c);text-shadow:var(--g)}
   .card.best::after{content:"closer";position:absolute;top:11px;right:11px;font-size:10px;font-weight:800;
     text-transform:uppercase;letter-spacing:.08em;color:var(--c);text-shadow:var(--g)}
+  .card.wide{grid-column:1/-1}
+  .card.big .val{font-size:46px}
+  .card.nobadge::after{content:none}
+
+  /* BPM inputs */
+  .bpm-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:10px}
+  .bpm-field .cap{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:8px}
+  .bpm-box{display:flex;align-items:center;border:1px solid var(--line-strong);border-radius:14px;background:rgba(12,8,24,.85);overflow:hidden}
+  .bpm-field.src .bpm-box{border-color:rgba(255,43,214,.55);box-shadow:0 0 12px rgba(255,43,214,.18)}
+  .bpm-field.dst .bpm-box{border-color:rgba(34,240,255,.55);box-shadow:0 0 12px rgba(34,240,255,.18)}
+  .bpm-box input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--text);
+    font-family:inherit;font-size:28px;font-weight:800;text-align:center;padding:10px 0;font-variant-numeric:tabular-nums;
+    -webkit-user-select:text;user-select:text;-moz-appearance:textfield}
+  .bpm-box input::-webkit-outer-spin-button,.bpm-box input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .step{appearance:none;border:0;background:transparent;color:var(--muted);font-size:22px;font-weight:700;width:34px;height:54px;font-family:inherit}
+  .arrow{color:var(--violet);text-shadow:var(--violet-glow);font-size:22px;padding-bottom:14px}
+  .ratio{text-align:center;font-size:12px;color:var(--muted);margin-top:12px}
+
+  .use{appearance:none;width:100%;margin-top:10px;font-family:inherit;font-size:14px;font-weight:700;color:var(--text);
+    height:46px;border-radius:14px;border:1px solid var(--violet);background:rgba(155,107,255,.14);
+    box-shadow:var(--violet-glow);text-shadow:0 0 8px rgba(155,107,255,.9)}
+  .use[disabled]{opacity:.35;box-shadow:none}
+  .exact{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+  .ex{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;
+    border:1px solid var(--line);background:rgba(12,8,24,.85)}
+  .ex .n{font-size:20px;font-weight:800}
+  .ex .t{font-size:15px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ex.lo .n{color:var(--pink);text-shadow:var(--pink-glow)}
+  .ex.hi .n{color:var(--cyan);text-shadow:var(--cyan-glow)}
+  .note-off{color:var(--pink)}
+  .note-ok{color:var(--cyan)}
 
   footer{color:var(--muted);font-size:11px;line-height:1.55;text-align:center;margin-top:8px;opacity:.85}
 </style>
@@ -107,42 +148,96 @@
 <body>
 <header>
   <h1>DIGITAKT 2 · TUNE</h1>
-  <div class="sub">sample → key</div>
+  <div class="sub" id="sub">sample → key</div>
 </header>
 
-<section class="p">
-  <div class="label">Pattern key <b id="pName">—</b></div>
-  <div class="grid" id="pGrid"></div>
-</section>
+<nav class="tabs">
+  <button type="button" data-tab="key" class="on">Key</button>
+  <button type="button" data-tab="bpm">BPM</button>
+</nav>
 
-<div class="swap"><button id="swap" type="button">⇅ swap</button></div>
+<!-- ============ KEY ============ -->
+<div class="view on" id="view-key">
+  <section class="p">
+    <div class="label">Pattern key <b id="pName">—</b></div>
+    <div class="grid" id="pGrid"></div>
+  </section>
 
-<section class="s">
-  <div class="label">Sample note <b id="sName">—</b></div>
-  <div class="grid" id="sGrid"></div>
-</section>
+  <div class="swap"><button id="swap" type="button">⇅ swap</button></div>
 
-<div class="summary" id="summary"></div>
+  <section class="s">
+    <div class="label">Sample note <b id="sName">—</b></div>
+    <div class="grid" id="sGrid"></div>
+  </section>
 
-<section>
-  <div class="results">
-    <div class="group-title">Trig · note (from C4)</div>
-    <div class="card up" id="tUp"><div class="dir"><i>▲</i> up</div><div class="val">—</div><div class="hint"></div></div>
-    <div class="card dn" id="tDn"><div class="dir"><i>▼</i> down</div><div class="val">—</div><div class="hint"></div></div>
-    <div class="group-title">Tune · semitones (from 0)</div>
-    <div class="card up" id="uUp"><div class="dir"><i>▲</i> up</div><div class="val">—</div><div class="hint"></div></div>
-    <div class="card dn" id="uDn"><div class="dir"><i>▼</i> down</div><div class="val">—</div><div class="hint"></div></div>
-  </div>
-</section>
+  <div class="summary" id="summary"></div>
 
-<footer>On Digitakt 2 a sample plays as C by default (C4 on the trig, 0 on TUNE).<br>Pick the pattern key and the sample note to get the shift both ways.</footer>
+  <section>
+    <div class="results">
+      <div class="group-title">Trig · note (from C4)</div>
+      <div class="card up" id="tUp"><div class="dir"><i>▲</i> up</div><div class="val">—</div><div class="hint"></div></div>
+      <div class="card dn" id="tDn"><div class="dir"><i>▼</i> down</div><div class="val">—</div><div class="hint"></div></div>
+      <div class="group-title">Tune · semitones (from 0)</div>
+      <div class="card up" id="uUp"><div class="dir"><i>▲</i> up</div><div class="val">—</div><div class="hint"></div></div>
+      <div class="card dn" id="uDn"><div class="dir"><i>▼</i> down</div><div class="val">—</div><div class="hint"></div></div>
+    </div>
+  </section>
+
+  <footer>On Digitakt 2 a sample plays as C by default (C4 on the trig, 0 on TUNE).<br>Pick the pattern key and the sample note to get the shift both ways.</footer>
+</div>
+
+<!-- ============ BPM ============ -->
+<div class="view" id="view-bpm">
+  <section>
+    <div class="bpm-row">
+      <div class="bpm-field src">
+        <div class="cap">Sample BPM</div>
+        <div class="bpm-box">
+          <button type="button" class="step" data-t="bFrom" data-d="-1">−</button>
+          <input id="bFrom" type="number" inputmode="decimal" min="20" max="400" step="0.1">
+          <button type="button" class="step" data-t="bFrom" data-d="1">+</button>
+        </div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="bpm-field dst">
+        <div class="cap">Project BPM</div>
+        <div class="bpm-box">
+          <button type="button" class="step" data-t="bTo" data-d="-1">−</button>
+          <input id="bTo" type="number" inputmode="decimal" min="20" max="400" step="0.1">
+          <button type="button" class="step" data-t="bTo" data-d="1">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="ratio" id="ratio"></div>
+  </section>
+
+  <section class="s">
+    <div class="label">Sample note at original BPM <b id="bsName">—</b></div>
+    <div class="grid" id="bGrid"></div>
+  </section>
+
+  <section>
+    <div class="results">
+      <div class="card vi best nobadge wide big" id="bNote"><div class="dir"><i>♪</i> nearest note</div><div class="val">—</div><div class="hint"></div></div>
+      <div class="card up" id="bSemi"><div class="dir"><i>⇅</i> pitch shift</div><div class="val">—</div><div class="hint">semitones</div></div>
+      <div class="card dn" id="bCents"><div class="dir"><i>≈</i> off by</div><div class="val">—</div><div class="hint">cents from nearest note</div></div>
+      <div class="card wide nobadge" id="bExact"><div class="dir"><i>◎</i> exact tempos for whole notes</div>
+        <div class="exact"><div class="ex lo"><span class="n">—</span><span class="t">—</span></div><div class="ex hi"><span class="n">—</span><span class="t">—</span></div></div>
+      </div>
+    </div>
+    <button type="button" class="use" id="useNote" disabled>Use as sample note in Key →</button>
+  </section>
+
+  <footer>Speeding a sample up raises its pitch, slowing it down lowers it (repitch, no timestretch).<br>Shift = 12 × log₂(project BPM ÷ sample BPM).</footer>
+</div>
 
 <script>
 (function(){
   var SH=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   var FL=['','D♭','','E♭','','','G♭','','A♭','','B♭',''];
-  var state={p:null,s:null};
-  try{var saved=JSON.parse(localStorage.getItem('dt2tune')||'null');if(saved){state.p=saved.p;state.s=saved.s;}}catch(e){}
+  var state={p:null,s:null,tab:'key',bFrom:105,bTo:125,bs:0};
+  try{var saved=JSON.parse(localStorage.getItem('dt2tune')||'null');if(saved){for(var k in saved)if(saved[k]!==undefined)state[k]=saved[k];}}catch(e){}
+  function save(){try{localStorage.setItem('dt2tune',JSON.stringify(state));}catch(e){}}
 
   function build(id,key){
     var g=document.getElementById(id);
@@ -150,47 +245,48 @@
       var b=document.createElement('button');b.type='button';
       if(n.length>1)b.className='sharp';
       b.innerHTML=n+(FL[i]?'<small>'+FL[i]+'</small>':'');
-      b.addEventListener('click',function(){state[key]=i;render();});
+      b.addEventListener('click',function(){state[key]=i;renderAll();});
       g.appendChild(b);
     });
   }
-  build('pGrid','p');build('sGrid','s');
+  build('pGrid','p');build('sGrid','s');build('bGrid','bs');
 
-  function noteAt(semi){ // relative to C4
-    var idx=((semi%12)+12)%12, oct=4+Math.floor(semi/12);
-    return SH[idx]+oct;
-  }
+  function noteAt(semi){var idx=((semi%12)+12)%12, oct=4+Math.floor(semi/12);return SH[idx]+oct;}
   function sign(n){return n>0?'+'+n:String(n).replace('-','−');}
   function setCard(id,val,hint,best){
     var c=document.getElementById(id);
     c.querySelector('.val').textContent=val;
-    c.querySelector('.hint').textContent=hint;
-    c.classList.toggle('best',!!best);
+    if(hint!==null)c.querySelector('.hint').textContent=hint;
+    if(best!==null)c.classList.toggle('best',!!best);
   }
-  function mark(id,i){
-    var bs=document.getElementById(id).children;
-    for(var k=0;k<bs.length;k++)bs[k].classList.toggle('on',k===i);
-  }
+  function mark(id,i){var bs=document.getElementById(id).children;for(var k=0;k<bs.length;k++)bs[k].classList.toggle('on',k===i);}
 
-  function render(){
+  /* ---------- tabs ---------- */
+  var tabs=document.querySelectorAll('.tabs button');
+  function showTab(){
+    for(var i=0;i<tabs.length;i++)tabs[i].classList.toggle('on',tabs[i].getAttribute('data-tab')===state.tab);
+    document.getElementById('view-key').classList.toggle('on',state.tab==='key');
+    document.getElementById('view-bpm').classList.toggle('on',state.tab==='bpm');
+    document.getElementById('sub').textContent=state.tab==='key'?'sample → key':'tempo → pitch';
+  }
+  for(var i=0;i<tabs.length;i++)tabs[i].addEventListener('click',function(){state.tab=this.getAttribute('data-tab');save();showTab();});
+
+  /* ---------- KEY ---------- */
+  function renderKey(){
     mark('pGrid',state.p);mark('sGrid',state.s);
     document.getElementById('pName').textContent=state.p==null?'—':SH[state.p];
     document.getElementById('sName').textContent=state.s==null?'—':SH[state.s];
-    try{localStorage.setItem('dt2tune',JSON.stringify(state));}catch(e){}
     var sum=document.getElementById('summary');
     if(state.p==null||state.s==null){
       sum.textContent='Pick both notes';
       ['tUp','tDn','uUp','uDn'].forEach(function(id){setCard(id,'—','',false);});
       return;
     }
-    var up=((state.p-state.s)%12+12)%12;
-    var dn=up-12;
+    var up=((state.p-state.s)%12+12)%12, dn=up-12;
     if(up===0){
       sum.innerHTML='<span class="same">Sample is already in key — no change needed</span>';
-      setCard('tUp','C4','no change',true);
-      setCard('tDn','C3','octave down',false);
-      setCard('uUp','0','no change',true);
-      setCard('uDn','−12','octave down',false);
+      setCard('tUp','C4','no change',true);setCard('tDn','C3','octave down',false);
+      setCard('uUp','0','no change',true);setCard('uDn','−12','octave down',false);
       return;
     }
     var upBest=up<=Math.abs(dn), dnBest=Math.abs(dn)<=up;
@@ -201,10 +297,65 @@
     setCard('uDn',sign(dn),'TUNE',dnBest);
   }
 
-  document.getElementById('swap').addEventListener('click',function(){
-    var t=state.p;state.p=state.s;state.s=t;render();
+  /* ---------- BPM ---------- */
+  var inFrom=document.getElementById('bFrom'), inTo=document.getElementById('bTo');
+  inFrom.value=state.bFrom;inTo.value=state.bTo;
+  var bpmResult=null;
+  function fmt(n,d){var s=n.toFixed(d);return s.indexOf('.')>-1?s.replace(/0+$/,'').replace(/\.$/,''):s;}
+  function renderBpm(){
+    mark('bGrid',state.bs);
+    document.getElementById('bsName').textContent=state.bs==null?'—':SH[state.bs];
+    var a=parseFloat(String(inFrom.value).replace(',','.')), b=parseFloat(String(inTo.value).replace(',','.'));
+    var use=document.getElementById('useNote'), ratio=document.getElementById('ratio');
+    if(!(a>0)||!(b>0)||state.bs==null){
+      bpmResult=null;use.disabled=true;ratio.textContent='Enter both tempos';
+      setCard('bNote','—','',null);setCard('bSemi','—',null,null);setCard('bCents','—',null,null);
+      var e0=document.getElementById('bExact');['.lo .n','.lo .t','.hi .n','.hi .t'].forEach(function(q){e0.querySelector(q).textContent='—';});
+      return;
+    }
+    state.bFrom=a;state.bTo=b;
+    var semis=12*Math.log(b/a)/Math.LN2;
+    var near=Math.round(semis), cents=Math.round((semis-near)*100);
+    if(cents===50||cents===-50){} // edge: exactly between notes, keep nearest from Math.round
+    var idx=((state.bs+near)%12+12)%12;
+    bpmResult=idx;use.disabled=false;
+    var r=b/a;
+    ratio.textContent='Speed ×'+fmt(r,3)+(r>1?' · faster → higher':r<1?' · slower → lower':' · same tempo');
+    var hint, lo=Math.floor(semis+1e-9), hi=lo+1;
+    if(Math.abs(cents)<=5){lo=near-1;hi=near+1;}
+    var nLo=SH[((state.bs+lo)%12+12)%12], nHi=SH[((state.bs+hi)%12+12)%12];
+    if(Math.abs(cents)<=5)hint='in tune with '+SH[idx];
+    else if(Math.abs(cents)>=25)hint='between '+nLo+' and '+nHi+' · fine-tune '+sign(-cents)+' cents to reach '+SH[idx];
+    else hint=(cents>0?'slightly sharp':'slightly flat')+' · fine-tune '+sign(-cents)+' cents';
+    var ex=document.getElementById('bExact');
+    ex.querySelector('.lo .n').textContent=nLo; ex.querySelector('.lo .t').textContent=fmt(a*Math.pow(2,lo/12),1)+' BPM';
+    ex.querySelector('.hi .n').textContent=nHi; ex.querySelector('.hi .t').textContent=fmt(a*Math.pow(2,hi/12),1)+' BPM';
+    setCard('bNote',SH[idx],hint,null);
+    document.querySelector('#bNote .hint').className='hint '+(Math.abs(cents)<=5?'note-ok':'note-off');
+    var sv=Math.abs(semis)<0.005?'0':(semis>0?'+':'−')+fmt(Math.abs(semis),2);
+    setCard('bSemi',sv,null,null);
+    setCard('bCents',sign(cents),null,null);
+  }
+  function onInput(){renderBpm();save();}
+  inFrom.addEventListener('input',onInput);inTo.addEventListener('input',onInput);
+  var steps=document.querySelectorAll('.step');
+  for(var j=0;j<steps.length;j++)steps[j].addEventListener('click',function(){
+    var el=document.getElementById(this.getAttribute('data-t'));
+    var v=parseFloat(String(el.value).replace(',','.'))||0;
+    v=Math.max(20,Math.min(400,Math.round(v+parseFloat(this.getAttribute('data-d')))));
+    el.value=v;onInput();
   });
-  render();
+  document.getElementById('useNote').addEventListener('click',function(){
+    if(bpmResult==null)return;
+    state.s=bpmResult;state.tab='key';renderAll();showTab();window.scrollTo(0,0);
+  });
+
+  document.getElementById('swap').addEventListener('click',function(){
+    var t=state.p;state.p=state.s;state.s=t;renderAll();
+  });
+
+  function renderAll(){renderKey();renderBpm();save();}
+  showTab();renderAll();
 })();
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});

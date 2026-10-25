@@ -1,7 +1,7 @@
 // DT2 Tune — офлайн-кеш.
 // Сторінка: спершу з інтернету (завжди свіжа версія), без мережі — з кешу.
 // Іконка: з кешу.
-const CACHE = 'dt2tune-v4';
+const CACHE = 'dt2tune-v6';
 const ASSETS = ['./', './index.html', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
