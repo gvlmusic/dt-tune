@@ -544,7 +544,7 @@
     var mx=-300,k,i;
     for(k=k0;k<=k1;k++)if(fb[k]>mx)mx=fb[k];
     if(mx<-125)return false;
-    var floor=Math.max(mx-42,-130),c=L.live,any=0;
+    var floor=Math.max(mx-42,-130),c=L.live,any=0,PF=[],PW=[],PD=[],PN=[],PA=[];
     for(i=0;i<12;i++){c[i]=0;L.fw[i]=0;L.fdev[i]=0;L.flow[i]=0;}
     for(k=k0;k<=k1;k++){
       var v=fb[k];
@@ -552,11 +552,24 @@
       var a=fb[k-1],b=fb[k+1],den=a-2*v+b,p=den<0?0.5*(a-b)/den:0,f=(k+p)*bin;
       var m=69+12*Math.log(f/440)/Math.LN2,n=Math.round(m),dev=m-n,ad=Math.abs(dev);
       if(ad>0.35)continue;
-      var w=Math.pow(10,(v-mx)/40)*(1-ad*2);
-      if(bassBoost)w/=Math.sqrt(1+f/250);
-      var pc=((n%12)+12)%12;
-      c[pc]+=w;L.fw[pc]+=w;L.fdev[pc]+=w*dev;
-      if(w>0.2&&(!L.flow[pc]||n<L.flow[pc]))L.flow[pc]=n;
+      PF.push(f);PA.push(Math.pow(10,(v-mx)/40));PD.push(dev);PN.push(n);PW.push(1-ad*2);
+    }
+    // overtone suppression: the 3rd/5th/6th partials of a note land on its 5th and MAJOR 3rd,
+    // which pushes minor tracks towards major. If a peak sits on such a partial of a stronger
+    // lower peak, most of its weight belongs to that lower note.
+    for(var q=0;q<PF.length;q++){
+      for(var r=0;r<q;r++){
+        if(PA[r]<PA[q]*0.7)continue;
+        var ratio=PF[q]/PF[r],h=Math.round(ratio);
+        if((h===3||h===5||h===6||h===7)&&Math.abs(ratio/h-1)<0.012){PW[q]*=0.25;break;}
+      }
+    }
+    for(q=0;q<PF.length;q++){
+      var w=PA[q]*PW[q];
+      if(bassBoost)w/=Math.sqrt(1+PF[q]/250);
+      var pc=((PN[q]%12)+12)%12;
+      c[pc]+=w;L.fw[pc]+=w;L.fdev[pc]+=w*PD[q];
+      if(w>0.2&&(!L.flow[pc]||PN[q]<L.flow[pc]))L.flow[pc]=PN[q];
       any++;
     }
     if(!any)return false;
@@ -668,10 +681,15 @@
         var top=L.keys[0];
         big.textContent=keyName(top);big.className='big ok';
         small.textContent=Math.round(top.p*100)+'% · '+(L.on?'tap to stop':'tap to listen again');
+        // always offer the parallel key (same tonic, other mode) as 2nd option — the classic mix-up
+        var par=null,klist=[top];
+        for(i=1;i<L.keys.length;i++)if(L.keys[i].pc===top.pc&&L.keys[i].minor!==top.minor){par=L.keys[i];break;}
+        klist=[L.keys[0],L.keys[1],L.keys[2]];
+        if(par&&klist.indexOf(par)<0)klist[2]=par;
         for(i=0;i<3;i++){
-          var o=L.keys[i],c=cands[i];c.hidden=false;c.classList.remove('pk');
+          var o=klist[i],c=cands[i];c.hidden=false;c.classList.remove('pk');
           c.querySelector('.kn').textContent=keyName(o,true);
-          c.querySelector('.ks').textContent='relative '+relName(o);
+          c.querySelector('.ks').textContent=(o===par?'same root, '+(o.minor?'minor':'major')+' · ':'')+'relative '+relName(o);
           c.querySelector('.kp').textContent=Math.round(o.p*100)+'%';
           c.querySelector('.ka').textContent='→ pattern key';
           candPick.push(o.pc);
