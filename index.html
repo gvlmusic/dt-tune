@@ -161,6 +161,18 @@
   #ring text.hp{fill:#fff}
   #ring .prog-bg{fill:none;stroke:rgba(155,107,255,.14);stroke-width:3}
   #ring .prog{fill:none;stroke:var(--cyan);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(34,240,255,.9));transition:stroke-dashoffset .2s,opacity .2s}
+  #ring path.lit{stroke:rgba(220,200,255,.85);filter:drop-shadow(0 0 5px rgba(155,107,255,.9))}
+  #ring .scan{opacity:0;transition:opacity .3s}
+  #ring .scan circle{fill:none;stroke-width:5;stroke-linecap:round}
+  #ring .scan .s1{stroke:var(--pink);stroke-dasharray:70 848;filter:drop-shadow(0 0 6px rgba(255,43,214,.95))}
+  #ring .scan .s2{stroke:var(--violet);stroke-dasharray:30 888;stroke-dashoffset:-460;filter:drop-shadow(0 0 5px rgba(155,107,255,.95))}
+  #ring.live .scan{opacity:1;animation:spin 1.6s linear infinite}
+  #ring.locked .scan .s1{stroke-dasharray:918 0;animation:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ring-wrap::after{content:"";position:absolute;inset:6%;border-radius:50%;pointer-events:none;opacity:0;
+    box-shadow:0 0 0 2px rgba(255,43,214,.55);transition:opacity .3s}
+  .ring-wrap.live::after{opacity:1;animation:ripple 1.6s ease-out infinite}
+  @keyframes ripple{0%{transform:scale(.62);opacity:.9}100%{transform:scale(1.04);opacity:0}}
   .core{--lv:0;appearance:none;position:absolute;inset:19%;border-radius:50%;font-family:inherit;color:var(--text);
     border:1px solid var(--line-strong);background:radial-gradient(circle at 50% 35%,rgba(60,36,110,.85),rgba(12,8,24,.95));
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 10px;
@@ -190,15 +202,19 @@
     display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;
     border:1px solid var(--line);background:rgba(14,9,28,.7)}
   .cand:active{transform:scale(.98)}
-  .cand .kn{font-size:22px;font-weight:800}
-  .cand .ks{font-size:11px;color:var(--muted);margin-top:2px}
+  .cand{border-color:rgba(155,107,255,.6);background:rgba(155,107,255,.10);box-shadow:0 0 10px rgba(155,107,255,.25)}
+  .cand .kn{font-size:22px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(155,107,255,.8)}
+  .cand .ks{font-size:12px;color:#d6ccf5;margin-top:3px}
   .cand .kr{text-align:right;flex:none}
-  .cand .kp{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
-  .cand .ka{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:2px}
-  .cand.top{border-color:var(--cyan);box-shadow:var(--cyan-glow),inset 0 0 16px rgba(34,240,255,.15)}
-  .cand.top .kn,.cand.top .kp{color:var(--cyan);text-shadow:var(--cyan-glow)}
-  .cand.top.pk{border-color:var(--pink);box-shadow:var(--pink-glow),inset 0 0 16px rgba(255,43,214,.15)}
-  .cand.top.pk .kn,.cand.top.pk .kp{color:var(--pink);text-shadow:var(--pink-glow)}
+  .cand .kp{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:#c9b2ff;text-shadow:var(--violet-glow)}
+  .cand .ka{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d6ccf5;margin-top:3px}
+  .cand.top{border:2px solid var(--cyan);background:rgba(34,240,255,.14);box-shadow:var(--cyan-glow),inset 0 0 20px rgba(34,240,255,.22)}
+  .cand.top .kn,.cand.top .kp{color:#bffbff;text-shadow:var(--cyan-glow)}
+  .cand.top .kn{font-size:26px}
+  .cand.top .ks,.cand.top .ka{color:#e8fdff}
+  .cand.top.pk{border-color:var(--pink);background:rgba(255,43,214,.14);box-shadow:var(--pink-glow),inset 0 0 20px rgba(255,43,214,.22)}
+  .cand.top.pk .kn,.cand.top.pk .kp{color:#ffc4f3;text-shadow:var(--pink-glow)}
+  .cand.top.pk .ks,.cand.top.pk .ka{color:#ffe6fa}
   .cand[hidden],.lempty[hidden]{display:none}
   .lempty{text-align:center;font-size:13px;color:var(--muted);padding:6px 0}
 </style>
@@ -301,6 +317,7 @@
       <svg id="ring" viewBox="-150 -150 300 300" aria-hidden="true">
         <circle class="prog-bg" r="146"></circle>
         <circle class="prog" id="lProg" r="146" transform="rotate(-90)"></circle>
+        <g class="scan"><circle class="s1" r="146"></circle><circle class="s2" r="146"></circle></g>
         <g id="ringSegs"></g>
       </svg>
       <button type="button" class="core" id="lCore">
@@ -456,12 +473,16 @@
   // Krumhansl–Kessler key profiles
   var MAJ=[6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
   var MIN=[6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
-  var KEY_READY=20;            // analysis frames (~2 s) before a key is shown
+  var KEY_READY=8;             // analysis frames (~0.8 s) before a key is shown
   var KEY_GOOD=15000;          // ms of listening that fills the progress ring
+  var GATE=0.0004;             // RMS below this = silence (phone mics are quiet without AGC)
+  var QUIET=0.0012;            // RMS below this shows the "too quiet" hint
   if(state.lm!=='note')state.lm='key';
   var L={on:false,ctx:null,stream:null,src:null,an:null,mute:null,tb:null,fb:null,yd:null,raf:0,
     t0:0,lastA:0,lastK:0,level:0,chroma:new Float64Array(12),live:new Float64Array(12),frames:0,
-    keys:null,pit:[],note:null,cur:0,err:''};
+    keys:null,pit:[],note:null,cur:0,err:'',
+    fw:new Float64Array(12),fdev:new Float64Array(12),flow:new Float64Array(12),
+    nc:new Float64Array(12),ndev:new Float64Array(12),nw:new Float64Array(12),nlow:new Float64Array(12),nf:0};
 
   var ringSegs=[];
   (function(){
@@ -481,8 +502,11 @@
   })();
   function paintRing(vals,hot,cls){
     for(var i=0;i<12;i++){
-      var s=ringSegs[i],v=vals?vals[i]:0;
-      s.p.style.fill='rgba(155,107,255,'+(0.07+0.6*v).toFixed(3)+')';
+      var s=ringSegs[i],v=vals?Math.max(0,Math.min(1,vals[i])):0,c=Math.pow(v,1.7);
+      // contrast curve: weak notes stay dark, strong ones glow bright
+      s.p.style.fill='rgba('+Math.round(110+90*c)+','+Math.round(70+90*c)+',255,'+(0.06+0.8*c).toFixed(3)+')';
+      s.t.style.fill=i===hot?'':'rgba(244,241,255,'+(0.4+0.6*c).toFixed(3)+')';
+      s.p.classList.toggle('lit',c>0.45&&i!==hot);
       s.p.classList.toggle('hc',i===hot&&cls==='hc');s.p.classList.toggle('hp',i===hot&&cls==='hp');
       s.t.classList.toggle('hc',i===hot&&cls==='hc');s.t.classList.toggle('hp',i===hot&&cls==='hp');
     }
@@ -490,8 +514,8 @@
   function setProg(f){var pr=document.getElementById('lProg');pr.style.strokeDashoffset=(pr.__c*(1-Math.max(0,Math.min(1,f)))).toFixed(1);}
 
   function lReset(){
-    for(var i=0;i<12;i++){L.chroma[i]=0;L.live[i]=0;}
-    L.frames=0;L.keys=null;L.pit=[];L.note=null;L.cur=0;L.err='';L.lastA=0;L.lastK=0;
+    for(var i=0;i<12;i++){L.chroma[i]=0;L.live[i]=0;L.nc[i]=0;L.ndev[i]=0;L.nw[i]=0;L.nlow[i]=0;}
+    L.nf=0;L.frames=0;L.keys=null;L.pit=[];L.note=null;L.cur=0;L.err='';L.lastA=0;L.lastK=0;
   }
 
   // YIN pitch detector on the most recent samples
@@ -504,51 +528,96 @@
       run+=s;d[tau]=run>0?s*tau/run:1;
     }
     for(tau=tauMin;tau<tauMax;tau++){
-      if(d[tau]<0.15){while(tau+1<tauMax&&d[tau+1]<d[tau])tau++;best=tau;break;}
+      if(d[tau]<0.2){while(tau+1<tauMax&&d[tau+1]<d[tau])tau++;best=tau;break;}
     }
-    if(best<0){var mn=1e9;for(tau=tauMin;tau<tauMax;tau++)if(d[tau]<mn){mn=d[tau];best=tau;}if(mn>0.3)return 0;}
+    if(best<0){var mn=1e9;for(tau=tauMin;tau<tauMax;tau++)if(d[tau]<mn){mn=d[tau];best=tau;}if(mn>0.4)return 0;}
     var x0=d[best-1],x1=d[best],x2=d[best+1],den=x0+x2-2*x1,sh=den>0?(x0-x2)/(2*den):0;
     if(Math.abs(sh)>1)sh=0;
     return sr/(best+sh);
   }
 
+  // One spectrum frame → per-note weights (L.live, 0..1), signed tuning deviation and lowest octave per note.
+  // bassBoost favours low partials (helps find the root of chords / rich samples).
+  function specFrame(sr,bassBoost){
+    L.an.getFloatFrequencyData(L.fb);
+    var fb=L.fb,bin=sr/L.an.fftSize,k0=Math.max(2,Math.floor(55/bin)),k1=Math.min(fb.length-2,Math.ceil(5000/bin));
+    var mx=-300,k,i;
+    for(k=k0;k<=k1;k++)if(fb[k]>mx)mx=fb[k];
+    if(mx<-125)return false;
+    var floor=Math.max(mx-42,-130),c=L.live,any=0;
+    for(i=0;i<12;i++){c[i]=0;L.fw[i]=0;L.fdev[i]=0;L.flow[i]=0;}
+    for(k=k0;k<=k1;k++){
+      var v=fb[k];
+      if(v<floor||v<fb[k-1]||v<fb[k+1])continue;
+      var a=fb[k-1],b=fb[k+1],den=a-2*v+b,p=den<0?0.5*(a-b)/den:0,f=(k+p)*bin;
+      var m=69+12*Math.log(f/440)/Math.LN2,n=Math.round(m),dev=m-n,ad=Math.abs(dev);
+      if(ad>0.35)continue;
+      var w=Math.pow(10,(v-mx)/40)*(1-ad*2);
+      if(bassBoost)w/=Math.sqrt(1+f/250);
+      var pc=((n%12)+12)%12;
+      c[pc]+=w;L.fw[pc]+=w;L.fdev[pc]+=w*dev;
+      if(w>0.2&&(!L.flow[pc]||n<L.flow[pc]))L.flow[pc]=n;
+      any++;
+    }
+    if(!any)return false;
+    var cm=0;for(i=0;i<12;i++)if(c[i]>cm)cm=c[i];
+    for(i=0;i<12;i++)c[i]/=cm;
+    return true;
+  }
+
   function lNote(now,sr,rms){
-    var f=rms>0.006?yin(L.tb,sr):0;
-    if(f>25&&f<1700)L.pit.push({t:now,m:69+12*Math.log(f/440)/Math.LN2});
-    else f=0;
-    while(L.pit.length&&now-L.pit[0].t>1200)L.pit.shift();
+    if(rms<GATE){L.cur=0;return;}
+    // 1) pitch tracker — exact for single notes (bass, leads, vocals)
+    var f=yin(L.tb,sr);
+    if(f>25&&f<1700)L.pit.push({t:now,m:69+12*Math.log(f/440)/Math.LN2});else f=0;
+    while(L.pit.length&&now-L.pit[0].t>700)L.pit.shift();
     L.cur=f;
-    if(L.pit.length>=5){
+    // 2) spectrum — works for chords, pads and noisy samples
+    if(specFrame(sr,true)){
+      for(var i=0;i<12;i++){
+        L.nc[i]=L.nc[i]*0.88+L.live[i];L.nw[i]=L.nw[i]*0.88+L.fw[i];L.ndev[i]=L.ndev[i]*0.88+L.fdev[i];
+        if(L.flow[i])L.nlow[i]=L.flow[i];
+      }
+      L.nf++;
+    }
+    var yn=null;
+    if(L.pit.length>=3){
       var ms=L.pit.map(function(o){return o.m;}).sort(function(a,b){return a-b;});
       var med=ms[ms.length>>1],sum=0,c=0;
-      for(var i=0;i<L.pit.length;i++)if(Math.abs(L.pit[i].m-med)<0.5){sum+=L.pit[i].m;c++;}
-      if(c>=4){
-        var mm=sum/c,near=Math.round(mm);
-        L.note={midi:near,pc:((near%12)+12)%12,cents:Math.round((mm-near)*100),hz:440*Math.pow(2,(mm-69)/12)};
-      }
+      for(i=0;i<L.pit.length;i++)if(Math.abs(L.pit[i].m-med)<0.5){sum+=L.pit[i].m;c++;}
+      if(c>=3&&c>=L.pit.length*0.6){var mm=sum/c;yn={mm:mm};}
+    }
+    // spectrum ranking (root of the whole sound, chords included)
+    var rank=[],tot=0;
+    if(L.nf>=3){
+      for(i=0;i<12;i++){rank.push(i);tot+=L.nc[i];}
+      rank.sort(function(a,b){return L.nc[b]-L.nc[a];});
+    }
+    function specNote(pc){
+      var dv=L.nw[pc]>0?L.ndev[pc]/L.nw[pc]:0,midi=L.nlow[pc]||(60+pc);
+      return {midi:midi,pc:pc,cents:Math.round(dv*100),hz:440*Math.pow(2,(midi+dv-69)/12),p:tot?L.nc[pc]/tot:0,src:'spectrum'};
+    }
+    var main=null;
+    if(yn){
+      var near=Math.round(yn.mm),ypc=((near%12)+12)%12;
+      // octave sanity: rich sounds can fool the tracker an octave low — check against the spectrum
+      if(L.nlow[ypc]&&Math.abs(L.nlow[ypc]-near)>=6){var sh=12*Math.round((L.nlow[ypc]-near)/12);near+=sh;yn.mm+=sh;}
+      // trust the pitch tracker only when the spectrum agrees it is a strong note
+      if(!rank.length||ypc===rank[0]||L.nc[ypc]>=0.6*L.nc[rank[0]])
+        main={midi:near,pc:ypc,cents:Math.round((yn.mm-near)*100),hz:440*Math.pow(2,(yn.mm-69)/12),p:tot?L.nc[ypc]/tot:1,src:'pitch'};
+    }
+    if(!main&&rank.length)main=specNote(rank[0]);
+    if(main){
+      main.alts=[];
+      for(i=0;i<rank.length&&main.alts.length<2;i++)if(rank[i]!==main.pc)main.alts.push(specNote(rank[i]));
+      L.note=main;
     }
   }
 
   function lKey(sr,rms){
-    if(rms<0.004)return;
-    L.an.getFloatFrequencyData(L.fb);
-    var fb=L.fb,bin=sr/L.an.fftSize,k0=Math.max(2,Math.floor(65/bin)),k1=Math.min(fb.length-2,Math.ceil(5000/bin));
-    var mx=-300,k,i;
-    for(k=k0;k<=k1;k++)if(fb[k]>mx)mx=fb[k];
-    if(mx<-100)return;
-    var floor=Math.max(mx-45,-100),c=L.live,any=0;
-    for(i=0;i<12;i++)c[i]=0;
-    for(k=k0;k<=k1;k++){
-      var v=fb[k];
-      if(v<floor||v<fb[k-1]||v<fb[k+1])continue;
-      var a=fb[k-1],b=fb[k+1],den=a-2*v+b,p=den<0?0.5*(a-b)/den:0;
-      var m=69+12*Math.log((k+p)*bin/440)/Math.LN2,n=Math.round(m),dev=Math.abs(m-n);
-      if(dev>0.3)continue;
-      c[((n%12)+12)%12]+=Math.pow(10,(v-mx)/40)*(1-dev*2);any++;
-    }
-    if(!any)return;
-    var cm=0;for(i=0;i<12;i++)if(c[i]>cm)cm=c[i];
-    for(i=0;i<12;i++){c[i]/=cm;L.chroma[i]+=c[i];}
+    if(rms<GATE)return;
+    if(!specFrame(sr,false))return;
+    for(var i=0;i<12;i++)L.chroma[i]+=L.live[i];
     L.frames++;
     L.keys=lEstimate(L.chroma);
   }
@@ -573,14 +642,14 @@
   function relName(o){return o.minor?SH[(o.pc+3)%12]+' major':SH[(o.pc+9)%12]+' minor';}
   function noteOct(midi){return SH[((midi%12)+12)%12]+(Math.floor(midi/12)-1);}
 
-  var core=document.getElementById('lCore'),cands=document.querySelectorAll('#lCands .cand'),candPick=[];
+  var core=document.getElementById('lCore'),ring=document.getElementById('ring'),ringWrap=document.querySelector('.ring-wrap'),cands=document.querySelectorAll('#lCands .cand'),candPick=[];
   function lMsg(t,err){var s=document.getElementById('lStatus');s.textContent=t;s.classList.toggle('err',!!err);}
 
   function lRender(){
     var key=state.lm==='key',big=document.getElementById('lBig'),small=document.getElementById('lSmall');
     var el=L.on?performance.now()-L.t0:0,secs=Math.floor(el/1000),i;
     document.getElementById('lMic').textContent=L.on?'● listening':'● mic';
-    core.style.setProperty('--lv',L.on?Math.min(1,L.level*6).toFixed(3):'0');
+    core.style.setProperty('--lv',L.on?Math.min(1,Math.sqrt(L.level)*5).toFixed(3):'0');
     document.getElementById('lCm').hidden=key;
     document.getElementById('lProg').style.opacity=key?'1':'0';
     document.getElementById('lResTitle').textContent=key?'Track key · tap to use as pattern key':'Sample note · tap to use';
@@ -615,41 +684,50 @@
       document.getElementById('lEmpty').hidden=!!ready;
       document.getElementById('lEmpty').textContent=L.on?'Collecting notes…':'Tap the circle and play the track';
       if(L.err)lMsg(L.err,true);
-      else if(L.on)lMsg(L.level<0.004?'Too quiet — turn it up or move closer':
+      else if(L.on)lMsg(L.level<QUIET?'Too quiet — turn it up or move closer':
         (el<10000?'Listening '+secs+' s · keep going, 10–20 s is best':'Listening '+secs+' s · good, tap to stop'));
       else lMsg(ready?'Done · '+L.frames+' frames analysed':'');
     }else{
       setProg(0);
       var n=L.note,needle=document.getElementById('lNeedle');
-      paintRing(null,n?n.pc:-1,'hp');
+      var nv=null;
+      if(L.nf){var nm=0;for(i=0;i<12;i++)nm=Math.max(nm,L.nc[i]);nv=[];for(i=0;i<12;i++)nv.push(nm?L.nc[i]/nm:0);}
+      paintRing(nv,n?n.pc:-1,'hp');
+      ring.classList.toggle('locked',!!(L.on&&n&&n.src==='pitch'));
       if(n){
         big.textContent=noteOct(n.midi);big.className='big pk';
         small.textContent=(n.cents>0?'+':n.cents<0?'−':'')+Math.abs(n.cents)+' ¢ · '+fmt(n.hz,1)+' Hz';
         needle.style.left=(50+Math.max(-50,Math.min(50,n.cents)))+'%';
         needle.classList.toggle('ok',Math.abs(n.cents)<=5);
-        var c0=cands[0];c0.hidden=false;c0.classList.add('pk');
-        c0.querySelector('.kn').textContent=SH[n.pc]+(FL[n.pc]?' / '+FL[n.pc]:'');
-        c0.querySelector('.ks').textContent=Math.abs(n.cents)<=5?'in tune':(n.cents>0?'sharp ':'flat ')+Math.abs(n.cents)+' cents · fine-tune '+(n.cents>0?'−':'+')+Math.abs(n.cents);
-        c0.querySelector('.kp').textContent=noteOct(n.midi);
-        c0.querySelector('.ka').textContent='→ sample note';
-        candPick.push(n.pc);
+        var list=[n].concat(n.alts||[]);
+        for(i=0;i<3;i++){
+          var o2=list[i],cc=cands[i];
+          if(!o2){cc.hidden=true;continue;}
+          cc.hidden=false;cc.classList.toggle('pk',i===0);
+          cc.querySelector('.kn').textContent=SH[o2.pc]+(FL[o2.pc]?' / '+FL[o2.pc]:'');
+          cc.querySelector('.ks').textContent=i===0
+            ?(Math.abs(o2.cents)<=5?'in tune':(o2.cents>0?'sharp ':'flat ')+Math.abs(o2.cents)+' ¢ · fine-tune '+(o2.cents>0?'−':'+')+Math.abs(o2.cents))+(o2.src==='spectrum'?' · root of the sound':'')
+            :'also strong in the sound';
+          cc.querySelector('.kp').textContent=Math.round(o2.p*100)+'%';
+          cc.querySelector('.ka').textContent=noteOct(o2.midi)+' → sample note';
+          candPick.push(o2.pc);
+        }
       }else{
-        big.textContent=L.on?'…':'Listen';small.textContent=L.on?'play a note':'tap to start';
+        big.textContent=L.on?'…':'Listen';small.textContent=L.on?'listening…':'tap to start';
         needle.style.left='50%';needle.classList.remove('ok');
-        cands[0].hidden=true;
+        for(i=0;i<3;i++)cands[i].hidden=true;
       }
-      cands[1].hidden=true;cands[2].hidden=true;
       document.getElementById('lEmpty').hidden=!!n;
       document.getElementById('lEmpty').textContent=L.on?'Waiting for a stable pitch…':'Tap the circle and play the sample';
       if(L.err)lMsg(L.err,true);
-      else if(L.on)lMsg(L.level<0.006?'Too quiet — turn it up or move closer':L.cur?'Hearing '+fmt(L.cur,1)+' Hz':'No clear pitch — try a cleaner, sustained sound');
+      else if(L.on)lMsg(L.level<QUIET?'Too quiet — turn it up or move closer':n?(n.src==='pitch'?'Locked on pitch · tap to stop':'Reading the sound’s root · tap to stop'):'Listening…');
       else lMsg(n?'Done · last stable note held':'');
     }
   }
 
   function lLoop(now){
     L.raf=requestAnimationFrame(lLoop);
-    if(now-L.lastA<45)return;L.lastA=now;
+    if(now-L.lastA<30)return;L.lastA=now;
     var sr=L.ctx.sampleRate;
     L.an.getFloatTimeDomainData(L.tb);
     var N=L.tb.length,rms=0;for(var i=N-2048;i<N;i++)rms+=L.tb[i]*L.tb[i];
@@ -670,13 +748,21 @@
     md.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}).then(function(s){
       if(state.tab!=='listen'||document.hidden){s.getTracks().forEach(function(t){t.stop();});return;}
       L.stream=s;
+      // some phones capture at a different rate than the audio engine → pitch would read off; match them
+      try{
+        var tr=s.getAudioTracks()[0],st=tr&&tr.getSettings?tr.getSettings():{};
+        if(st.sampleRate&&Math.abs(st.sampleRate-L.ctx.sampleRate)>1){
+          try{L.ctx.close();}catch(e){}
+          try{L.ctx=new AC({sampleRate:st.sampleRate});}catch(e){L.ctx=new AC();}
+        }
+      }catch(e){}
       if(L.ctx.resume)L.ctx.resume();
       L.src=L.ctx.createMediaStreamSource(s);
       L.an=L.ctx.createAnalyser();L.an.fftSize=16384;L.an.smoothingTimeConstant=0;
       L.mute=L.ctx.createGain();L.mute.gain.value=0;
       L.src.connect(L.an);L.an.connect(L.mute);L.mute.connect(L.ctx.destination);
       L.tb=new Float32Array(L.an.fftSize);L.fb=new Float32Array(L.an.frequencyBinCount);
-      L.on=true;L.t0=performance.now();core.classList.add('live');setProg(0);
+      L.on=true;L.t0=performance.now();core.classList.add('live');ring.classList.add('live');ringWrap.classList.add('live');setProg(0);
       L.raf=requestAnimationFrame(lLoop);
     }).catch(function(e){
       L.err=e&&(e.name==='NotAllowedError'||e.name==='SecurityError')?'Microphone access denied — allow it in the browser settings':'Could not open the microphone';
@@ -688,7 +774,7 @@
     if(L.stream){L.stream.getTracks().forEach(function(t){t.stop();});L.stream=null;}
     if(L.src){try{L.src.disconnect();L.an.disconnect();L.mute.disconnect();}catch(e){}L.src=null;}
     if(L.ctx&&L.ctx.suspend&&L.ctx.state==='running')L.ctx.suspend();
-    var was=L.on;L.on=false;L.level=0;core.classList.remove('live');
+    var was=L.on;L.on=false;L.level=0;core.classList.remove('live');ring.classList.remove('live','locked');ringWrap.classList.remove('live');
     if(was)lRender();
   }
   window.__lStop=lStop;
