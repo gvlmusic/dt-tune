@@ -482,7 +482,7 @@
     t0:0,lastA:0,lastK:0,level:0,chroma:new Float64Array(12),live:new Float64Array(12),frames:0,
     keys:null,pit:[],note:null,cur:0,err:'',
     fw:new Float64Array(12),fdev:new Float64Array(12),flow:new Float64Array(12),
-    nc:new Float64Array(12),ndev:new Float64Array(12),nw:new Float64Array(12),nlow:new Float64Array(12),nf:0};
+    ac:new Float64Array(12),nc:new Float64Array(12),ndev:new Float64Array(12),nw:new Float64Array(12),nlow:new Float64Array(12),nf:0};
 
   var ringSegs=[];
   (function(){
@@ -514,7 +514,7 @@
   function setProg(f){var pr=document.getElementById('lProg');pr.style.strokeDashoffset=(pr.__c*(1-Math.max(0,Math.min(1,f)))).toFixed(1);}
 
   function lReset(){
-    for(var i=0;i<12;i++){L.chroma[i]=0;L.live[i]=0;L.nc[i]=0;L.ndev[i]=0;L.nw[i]=0;L.nlow[i]=0;}
+    for(var i=0;i<12;i++){L.chroma[i]=0;L.live[i]=0;L.nc[i]=0;L.ac[i]=0;L.ndev[i]=0;L.nw[i]=0;L.nlow[i]=0;}
     L.nf=0;L.frames=0;L.keys=null;L.pit=[];L.note=null;L.cur=0;L.err='';L.lastA=0;L.lastK=0;
   }
 
@@ -583,22 +583,55 @@
     // 1) pitch tracker — exact for single notes (bass, leads, vocals)
     var f=yin(L.tb,sr);
     if(f>25&&f<1700)L.pit.push({t:now,m:69+12*Math.log(f/440)/Math.LN2});else f=0;
-    while(L.pit.length&&now-L.pit[0].t>700)L.pit.shift();
+    while(L.pit.length&&now-L.pit[0].t>900)L.pit.shift();
     L.cur=f;
-    // 2) spectrum — works for chords, pads and noisy samples
+    // 2) spectrum — works for chords, pads and noisy samples.
+    //    nc = short memory (~0.25 s), ac = long memory (~2 s) for arpeggios / riffs
+    var i;
     if(specFrame(sr,true)){
-      for(var i=0;i<12;i++){
-        L.nc[i]=L.nc[i]*0.88+L.live[i];L.nw[i]=L.nw[i]*0.88+L.fw[i];L.ndev[i]=L.ndev[i]*0.88+L.fdev[i];
-        if(L.flow[i])L.nlow[i]=L.flow[i];
+      for(i=0;i<12;i++){
+        L.nc[i]=L.nc[i]*0.88+L.live[i];L.nw[i]=L.nw[i]*0.97+L.fw[i];L.ndev[i]=L.ndev[i]*0.97+L.fdev[i];
+        L.ac[i]=L.ac[i]*0.985+L.live[i];
+        if(L.flow[i]&&(!L.nlow[i]||L.flow[i]<L.nlow[i]||L.nf%40===0))L.nlow[i]=L.flow[i];
       }
       L.nf++;
     }
+    if(f){var fp=((Math.round(69+12*Math.log(f/440)/Math.LN2)%12)+12)%12;L.ac[fp]+=0.6;}
     var yn=null;
-    if(L.pit.length>=3){
+    if(L.pit.length>=4){
       var ms=L.pit.map(function(o){return o.m;}).sort(function(a,b){return a-b;});
       var med=ms[ms.length>>1],sum=0,c=0;
       for(i=0;i<L.pit.length;i++)if(Math.abs(L.pit[i].m-med)<0.5){sum+=L.pit[i].m;c++;}
-      if(c>=3&&c>=L.pit.length*0.6){var mm=sum/c;yn={mm:mm};}
+      // one steady note only — an arpeggio/riff keeps jumping and fails this
+      if(c>=4&&c>=L.pit.length*0.65){var mm=sum/c;yn={mm:mm};}
+    }
+    // 3) arpeggio / chord / riff: match the long memory against chord shapes → root note
+    if(!yn&&L.nf>=8){
+      var mxa=0;for(i=0;i<12;i++)mxa=Math.max(mxa,L.ac[i]);
+      if(mxa>0){
+        var A=[],tot2=0;for(i=0;i<12;i++){A.push(L.ac[i]/mxa);tot2+=A[i];}
+        var SHAPES=[{n:'',t:[0,4,7]},{n:'m',t:[0,3,7]},{n:'5',t:[0,7]}],res=[];
+        for(var r=0;r<12;r++){
+          var bestS=-9,bestN='';
+          SHAPES.forEach(function(S){
+            var inS=0,cnt=0;S.t.forEach(function(x,j){inS+=A[(r+x)%12]*(j===0?1.2:1);});
+            var out=(tot2-S.t.reduce(function(s,x){return s+A[(r+x)%12];},0))/(12-S.t.length);
+            var sc=inS/S.t.length-out*1.1+(S.t.length===2?-0.08:0);
+            if(sc>bestS){bestS=sc;bestN=S.n;}
+          });
+          res.push({pc:r,s:bestS*(0.35+0.65*A[r]),q:bestN});  // the root itself must sound strong
+        }
+        res.sort(function(a,b){return b.s-a.s;});
+        var sp=0;for(i=0;i<3;i++)sp+=Math.max(0.01,res[i].s);
+        var mk=function(o){
+          var dv=L.nw[o.pc]>0?L.ndev[o.pc]/L.nw[o.pc]:0,midi=L.nlow[o.pc]||(48+o.pc);
+          return {midi:midi,pc:o.pc,cents:Math.round(dv*100),hz:440*Math.pow(2,(midi+dv-69)/12),
+            p:Math.max(0.01,o.s)/sp,src:'chord',chord:SH[o.pc]+o.q};
+        };
+        var cm=mk(res[0]);cm.alts=[mk(res[1]),mk(res[2])];
+        L.note=cm;
+        return;
+      }
     }
     // spectrum ranking (root of the whole sound, chords included)
     var rank=[],tot=0;
@@ -713,8 +746,9 @@
       paintRing(nv,n?n.pc:-1,'hp');
       ring.classList.toggle('locked',!!(L.on&&n&&n.src==='pitch'));
       if(n){
-        big.textContent=noteOct(n.midi);big.className='big pk';
-        small.textContent=(n.cents>0?'+':n.cents<0?'−':'')+Math.abs(n.cents)+' ¢ · '+fmt(n.hz,1)+' Hz';
+        big.textContent=n.src==='chord'?SH[n.pc]:noteOct(n.midi);big.className='big pk';
+        small.textContent=n.src==='chord'?n.chord+' arp / chord · '+(n.cents>0?'+':n.cents<0?'−':'')+Math.abs(n.cents)+' ¢'
+          :(n.cents>0?'+':n.cents<0?'−':'')+Math.abs(n.cents)+' ¢ · '+fmt(n.hz,1)+' Hz';
         needle.style.left=(50+Math.max(-50,Math.min(50,n.cents)))+'%';
         needle.classList.toggle('ok',Math.abs(n.cents)<=5);
         var list=[n].concat(n.alts||[]);
@@ -724,10 +758,10 @@
           cc.hidden=false;cc.classList.toggle('pk',i===0);
           cc.querySelector('.kn').textContent=SH[o2.pc]+(FL[o2.pc]?' / '+FL[o2.pc]:'');
           cc.querySelector('.ks').textContent=i===0
-            ?(Math.abs(o2.cents)<=5?'in tune':(o2.cents>0?'sharp ':'flat ')+Math.abs(o2.cents)+' ¢ · fine-tune '+(o2.cents>0?'−':'+')+Math.abs(o2.cents))+(o2.src==='spectrum'?' · root of the sound':'')
-            :'also strong in the sound';
+            ?(o2.src==='chord'?'root of '+o2.chord+' arp / chord · ':'')+(Math.abs(o2.cents)<=5?'in tune':(o2.cents>0?'sharp ':'flat ')+Math.abs(o2.cents)+' ¢ · fine-tune '+(o2.cents>0?'−':'+')+Math.abs(o2.cents))+(o2.src==='spectrum'?' · root of the sound':'')
+            :(o2.src==='chord'?'if it is '+o2.chord:'also strong in the sound');
           cc.querySelector('.kp').textContent=Math.round(o2.p*100)+'%';
-          cc.querySelector('.ka').textContent=noteOct(o2.midi)+' → sample note';
+          cc.querySelector('.ka').textContent=(o2.src==='chord'?'':noteOct(o2.midi)+' ')+'→ sample note';
           candPick.push(o2.pc);
         }
       }else{
@@ -738,7 +772,7 @@
       document.getElementById('lEmpty').hidden=!!n;
       document.getElementById('lEmpty').textContent=L.on?'Waiting for a stable pitch…':'Tap the circle and play the sample';
       if(L.err)lMsg(L.err,true);
-      else if(L.on)lMsg(L.level<QUIET?'Too quiet — turn it up or move closer':n?(n.src==='pitch'?'Locked on pitch · tap to stop':'Reading the sound’s root · tap to stop'):'Listening…');
+      else if(L.on)lMsg(L.level<QUIET?'Too quiet — turn it up or move closer':n?(n.src==='pitch'?'Locked on pitch · tap to stop':n.src==='chord'?'Notes are moving — reading the arpeggio / chord root':'Reading the sound’s root · tap to stop'):'Listening…');
       else lMsg(n?'Done · last stable note held':'');
     }
   }
